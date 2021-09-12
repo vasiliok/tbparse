@@ -1,0 +1,363 @@
+WP: " " | "\t" | "\n"
+%ignore WP
+
+DIGIT           : "0".."9"
+LCASE_LETTER    : "a".."z"
+UCASE_LETTER    : "A".."Z"
+SP: " "
+
+
+//[3]
+LETTER_DIGIT: LCASE_LETTER | UCASE_LETTER | DIGIT | "_"
+
+standard_identifier: LETTER_DIGIT+
+
+identifier: standard_identifier
+//[2]
+
+
+
+//[146]   
+field_reference: [ field_qualifier "." ] field_identifier
+
+//[147]   
+field_qualifier: table_identifier | view_identifier | correlation_identifier
+
+//[7] 
+user_identifier: identifier | "PUBLIC" | "USER"
+
+//[8] 
+schema_identifier: user_identifier
+
+// [10]
+
+predidentifier: [ schema_identifier "." ] identifier
+
+sequence_identifier: predidentifier
+
+//[11]
+table_identifier: predidentifier
+
+//[12]
+view_identifier: predidentifier
+
+//[15]    
+field_identifier: identifier
+
+//[17]    
+correlation_identifier: identifier
+
+//[18]    
+data_type: "TINYINT" | "SMALLINT" | "INTEGER" | "BIGINT"
+    | "NUMERIC" ["("precision ["," scale]")"] 
+    | "DECIMAL" ["("precision ["," scale] ")"] 
+    | "FLOAT" | "DOUBLE" | "REAL" 
+    | "VARCHAR" [ "(" precision ")" ] | "CHAR" [ "(" precision ")" ] 
+    | "VARCHAR(*)" | "CHAR(*)" | "STRING" 
+    | "BINCHAR" [ "(" precision ")" ] | "BINCHAR(*)" 
+    | "BITS (" precision ")" | "BITS (*)" 
+    | "BITS2 (" precision ")" | "BITS2 (*)" 
+    | "BOOL" 
+    | "DATETIME" range | "DATE" | "TIME" | "TIMESTAMP" 
+    | "TIMESPAN" range 
+    | "INTERVAL" start_ix2 [ "TO" end_ix2 ] 
+    | "BLOB" | "CLOB"
+
+//[19]    
+precision: INTEGERLITERAL   
+
+//[20]    
+scale: INTEGERLITERAL
+
+//[21]    
+range: LEFTBR RANGEIX1 [ ":" RANGEIX1 ] RIGHTBR   
+
+//[22]    
+LEFTBR: "["
+//[23]    
+RIGHTBR: "]"
+
+//[24]    
+RANGEIX1: "YY" | "MO" | "DD" | "HH" | "MI" | "SS" | "MS"
+//[25]    
+
+start_ix2: RANGEIX2 [ precision ]
+//[26]    
+end_ix2: RANGEIX2 [ precision ]   
+
+//[27]    
+RANGEIX2: "YEAR" | "MONTH" | "DAY" | "HOUR" | "MINUTE" | "SECOND"
+
+//[28]    
+literal: INTEGERLITERAL 
+         | numeric_literal 
+         | real_literal 
+         | string_literal 
+         //| BinaryLiteral 
+         //| BitsLiteral 
+         //| BoolLiteral 
+         //| DatetimeLiteral 
+         //| TimespanLiteral 
+         //| DirectoryLiteral 
+         //| FileLiteral
+
+//31
+INTEGERLITERAL: "0" | "1".."9"("0".."9")*
+
+//[32]    
+numeric_literal: INTEGERLITERAL "." [ INTEGERLITERAL ] | "." INTEGERLITERAL
+
+//[33]    
+real_literal: (INTEGERLITERAL | numeric_literal) ("e" | "E") [ "+" | "-" ] INTEGERLITERAL
+
+//[34]    
+
+string_literal: character_literal | unicode_literal //| USER     
+//[35]    
+character_literal: "'" (LETTER_DIGIT | SP )* "'"
+//[36]    
+unicode_literal: "0u" LETTER_DIGIT+
+
+//[98]
+field_list: field_identifier ("," field_identifier)*
+
+
+//[148]   
+expression: [UNARY] primary (BINARY [UNARY] primary)*
+//[149]   
+UNARY: "+" | "-" | "BITNOT"
+//[150]   
+BINARY: "+" | "-" | "*" | "/" | "BITAND" | "BITOR" | "||"
+
+//[152]   
+primary: simple_primary
+
+// [154]
+
+simple_primary: literal 
+                | field_reference 
+                | parameter 
+                | "(" expression ")" 
+                | set_function 
+                | conditional_expression 
+                | string_function 
+                | sign_function 
+                | resultcount_expression 
+                | sequence_expression 
+                | function_call
+                | "NULL"
+//[155]   
+parameter: "#" INTEGERLITERAL ( data_type ) 
+           | COLON standard_identifier
+           | QUESTIONMARK
+//[156]   
+COLON: ":"
+
+//[157]   
+QUESTIONMARK: "?"
+
+//[158]   
+set_function: "COUNT" "(" "*" ")" | distinct_function | all_function     
+
+//[159]   
+distinct_function: ( "AVG" | "COUNT" | "MAX" | "MIN" | "SUM" ) "(" "DISTINCT" expression ")"
+
+//[160]   
+all_function: ( "AVG" | "MAX" | "MIN" | "SUM" ) "(" ["ALL"] expression ")"
+
+
+//[170]   
+string_function: position_function
+
+//[171]
+position_function: "POSITION" "(" expression "IN" expression ")"
+
+
+
+//[191]   
+sign_function: "SIGN" "(" expression ")"
+
+// [192]   
+resultcount_expression: "RESULTCOUNT"
+
+//[193]   
+sequence_expression: sequence_identifier "." "NEXTVAL" | sequence_identifier "." "CURRVAL"
+
+//[194]   
+
+conditional_expression: if_expression
+                        | decode_expression 
+                        | nvl_expression 
+                        | coalesce_expression 
+
+//                        | CaseExpression 
+//                        | NullifExpression
+
+//[195]   
+if_expression: "IF" search_condition "THEN" expression "ELSE" expression "FI"
+
+//[196]   
+case_expression: searched_case_expression | simple_case_expression
+
+//[197]   
+searched_case_expression: "CASE" searched_when_clause (searched_when_clause)* [ "ELSE" expression ] "END"
+
+//[198]   
+searched_when_clause: "WHEN" search_condition "THEN" expression
+
+//[199]
+simple_case_expression: "CASE" case_operand simple_when_clause ( simple_when_clause )* [ "ELSE" expression ] "END"
+
+//[200]   
+simple_when_clause: "WHEN" when_operand "THEN" result
+
+//[201]   
+case_operand: result
+
+//[202]
+result: expression
+
+//[203]
+when_operand: expression
+
+//[204]
+decode_expression: "DECODE" "(" compare_expr "," map_term ("," map_term)* [ "," default_expr ] ")"
+
+//[205]
+map_term: when_expr "," then_expr
+
+compare_expr: expression
+
+//[207]
+when_expr: expression
+
+//[208]
+then_expr: expression
+
+//[209]
+default_expr: expression
+
+//[210]
+coalesce_expression: "COALESCE" "(" expression_list ")"
+
+//[211]   
+nvl_expression: "NVL" "(" expression "," expression ")"
+
+
+//[230]
+function_identifier: identifier
+
+//[233]   
+function_call: function_identifier "(" expression_list ")"    
+
+//[251]   
+expression_list: expression ("," expression)*
+
+
+//[227]   
+startpos: expression   
+
+//[228]
+length: expression
+
+search_condition: [ "NOT" ] predicate ( BOOLOP ["NOT"] predicate )*
+BOOLOP: "AND" | "OR"
+
+predicate: "(" search_condition ")" 
+            | comparison_predicate 
+            | between_predicate 
+            | like_predicate 
+            | matches_predicate 
+            | null_predicate 
+//| fulltext_predicate
+
+//[244]   
+comparison_predicate: value_comp_predicate 
+
+//[245]   
+value_comp_predicate: expression VALCOMPOP expression
+
+//[246]   
+VALCOMPOP: "<" | "<=" | "=" | "<>" | ">" | ">="
+
+
+//[248]   
+SETCOMPOP: ["NOT"] "SUBSET" ["OF"] | "=" | "<>"
+
+
+
+//[253]   
+record: "(" expression_list ")"
+
+//[254]   
+between_predicate: expression ["NOT"] "BETWEEN" expression [ BETWEEN_QUALIFIER ] "AND" expression [ BETWEEN_QUALIFIER ]
+
+//[255]   
+BETWEEN_QUALIFIER: "INCLUSIVE" | "EXCLUSIVE"
+
+//[256]   
+like_predicate: expression ["NOT"] "LIKE" SENSSPEC pattern [ "ESCAPE" escape_char ]
+
+//[257]   
+SENSSPEC: "SENSITIVE" | "INSENSITIVE"
+//[258]   
+
+pattern: expression
+//[259]   
+escape_char: expression
+
+//[260]   
+matches_predicate: expression ["NOT"] "MATCHES" SENSSPEC reg_pattern [ "ESCAPE" escape_char ]
+
+//[261]   
+reg_pattern: expression
+
+//[264]   
+QUANTIFIER: "ALL" | "ANY" | "SOME"
+
+//[265]
+null_predicate: expression "IS" [ "NOT" ] "NULL" | expression "=" "NULL" | expression "<>" "NULL"
+
+
+select_elem: expression [ ["AS"] field_identifier ]
+
+select_list: select_elem ( "," select_elem )*
+
+select_clause: "SELECT" [ "ALL" | "DISTINCT" ] select_list
+
+where_clause: "WHERE" search_condition
+
+JOINTYPE: "INNER" | "LEFT" | "RIGHT" | "FULL" 
+unidiff_spec: UNIDIFF_OP [ corresponding_spec ]
+UNIDIFF_OP: "UNION" ["ALL"] | "DIFF" | "EXCEPT"
+intersect_spec: "INTERSECT" [ corresponding_spec ]
+corresponding_spec : "CORRESPONDING" [ "BY" ( field_list ) ]
+
+
+table_expression: table_term [ unidiff_spec table_term ]
+
+
+joinpred: "ON" search_condition | "USING" "(" field_list ")"
+
+table_reference: [ "TABLE" ] table_spec [ ["AS"] "ALIAS" ] | select_expression | "(" table_expression ")" [ ["AS"] "ALIAS" ] | joined_table
+
+table_term: table_reference [ intersect_spec table_reference ]
+
+joined_table: table_reference "CROSS JOIN" table_reference
+              | table_reference "UNION JOIN" table_reference
+              | table_reference "NATURAL" [ JOINTYPE ] "JOIN" table_reference
+              | table_reference [ JOINTYPE ] "JOIN" table_reference [ joinpred ]
+              | "(" joined_table ")"
+
+local_table_spec: table_identifier  
+connection_identifier: identifier
+remote_table_spec: table_identifier "@" connection_identifier
+
+table_spec: local_table_spec | remote_table_spec
+
+
+
+
+from_clause: "FROM" table_reference ("," table_reference)*
+
+select_expression: select_clause [ from_clause [ where_clause ] ]

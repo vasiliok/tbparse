@@ -1,2 +1,6 @@
-Parsing Transbase select sntence
-lark reqirement
+Required python3 Lark
+
+virtualenv -ppython3 venv
+venv/bin/activate
+pip install lark
+python start_gram.py grammar_lr_correct.lark ex2.sql.py
