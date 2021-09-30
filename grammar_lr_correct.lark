@@ -6,48 +6,31 @@ LCASE_LETTER    : "a".."z"
 UCASE_LETTER    : "A".."Z"
 SP: " "
 
+DOT: "."
 
-//[3]
 LETTER_DIGIT: LCASE_LETTER | UCASE_LETTER | DIGIT | "_"
 
 standard_identifier: LETTER_DIGIT+
 
 identifier: standard_identifier
-//[2]
 
-
-
-//[146]   
 field_reference: [ field_qualifier "." ] field_identifier
 
-//[147]   
 field_qualifier: table_identifier | view_identifier | correlation_identifier
 
-//[7] 
-user_identifier: identifier | "PUBLIC" | "USER"
 
-//[8] 
-schema_identifier: user_identifier
-
-// [10]
-
-predidentifier: [ schema_identifier "." ] identifier
+predidentifier:  [identifier "PUBLIC" | identifier "USER"] DOT identifier | identifier
 
 sequence_identifier: predidentifier
 
-//[11]
 table_identifier: predidentifier
 
-//[12]
 view_identifier: predidentifier
 
-//[15]    
 field_identifier: identifier
 
-//[17]    
 correlation_identifier: identifier
 
-//[18]    
 data_type: "TINYINT" | "SMALLINT" | "INTEGER" | "BIGINT"
     | "NUMERIC" ["("precision ["," scale]")"] 
     | "DECIMAL" ["("precision ["," scale] ")"] 
@@ -63,32 +46,22 @@ data_type: "TINYINT" | "SMALLINT" | "INTEGER" | "BIGINT"
     | "INTERVAL" start_ix2 [ "TO" end_ix2 ] 
     | "BLOB" | "CLOB"
 
-//[19]    
-precision: INTEGERLITERAL   
+precision: INTEGERLITERAL
 
-//[20]    
 scale: INTEGERLITERAL
 
-//[21]    
 range: LEFTBR RANGEIX1 [ ":" RANGEIX1 ] RIGHTBR   
 
-//[22]    
 LEFTBR: "["
-//[23]    
 RIGHTBR: "]"
 
-//[24]    
 RANGEIX1: "YY" | "MO" | "DD" | "HH" | "MI" | "SS" | "MS"
-//[25]    
 
 start_ix2: RANGEIX2 [ precision ]
-//[26]    
 end_ix2: RANGEIX2 [ precision ]   
 
-//[27]    
 RANGEIX2: "YEAR" | "MONTH" | "DAY" | "HOUR" | "MINUTE" | "SECOND"
 
-//[28]    
 literal: INTEGERLITERAL 
          | numeric_literal 
          | real_literal 
@@ -101,13 +74,10 @@ literal: INTEGERLITERAL
          //| DirectoryLiteral 
          //| FileLiteral
 
-//31
 INTEGERLITERAL: "0" | "1".."9"("0".."9")*
 
-//[32]    
 numeric_literal: INTEGERLITERAL "." [ INTEGERLITERAL ] | "." INTEGERLITERAL
 
-//[33]    
 real_literal: (INTEGERLITERAL | numeric_literal) ("e" | "E") [ "+" | "-" ] INTEGERLITERAL
 
 //[34]    
@@ -181,7 +151,7 @@ sign_function: "SIGN" "(" expression ")"
 resultcount_expression: "RESULTCOUNT"
 
 //[193]   
-sequence_expression: sequence_identifier "." "NEXTVAL" | sequence_identifier "." "CURRVAL"
+sequence_expression: sequence_identifier DOT "NEXTVAL" | sequence_identifier DOT "CURRVAL"
 
 //[194]   
 
@@ -359,5 +329,6 @@ table_spec: local_table_spec | remote_table_spec
 
 
 from_clause: "FROM" table_reference ("," table_reference)*
+group_clause: "GROUP BY" expression ("," expression )*
 
-select_expression: select_clause [ from_clause [ where_clause ] ]
+select_expression: select_clause [ from_clause [ where_clause ] [ group_clause ]]
